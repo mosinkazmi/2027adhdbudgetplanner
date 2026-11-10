@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f5f3ef">
+<title>2027 Paycheck Budget Planner</title>
+<style>
+:root{
+ --bg:#f5f3ef;--surface:#fffefa;--surface2:#eeece6;--text:#252923;--muted:#777c73;
+ --line:#dfded6;--accent:#718b78;--accent2:#e4ebe3;--bill:#c0735a;--shadow:0 12px 36px rgba(38,43,35,.07);
+ --radius:18px;--month-w:82px;
+}
+[data-theme="night"]{
+ --bg:#171b19;--surface:#222925;--surface2:#2b342e;--text:#edf1eb;--muted:#a6b0a6;
+ --line:#3b463e;--accent:#a7c4a8;--accent2:#344638;--bill:#e0a07f;--shadow:0 12px 36px rgba(0,0,0,.2);
+}
+[data-palette="sage"]{--accent:#718b78;--accent2:#e4ebe3}
+[data-palette="lavender"]{--accent:#8b7ba9;--accent2:#eee9f5}
+[data-palette="ocean"]{--accent:#548b9a;--accent2:#e1eef0}
+[data-palette="terracotta"]{--accent:#b8755e;--accent2:#f4e8e1}
+[data-palette="rose"]{--accent:#b8798a;--accent2:#f4e7eb}
+[data-palette="butter"]{--accent:#a58a45;--accent2:#f2eedc}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:background .2s,color .2s}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1440px;margin:auto;padding:24px 22px 40px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:14px;background:var(--accent2);display:grid;place-items:center;color:var(--accent);font-size:20px;font-weight:800}
+.brand h1{font-size:18px;letter-spacing:-.5px;margin:0}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:11px;letter-spacing:1.4px;text-transform:uppercase}
+.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 13px;border-radius:12px;font-weight:650;font-size:12px}
+.btn.primary{background:var(--accent);color:white;border-color:var(--accent)}
+.btn:hover{filter:brightness(.97);transform:translateY(-1px)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) var(--month-w);gap:14px;align-items:start}
+.main{min-width:0}
+.welcome{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px;box-shadow:var(--shadow);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:18px}
+.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:1.8px;color:var(--accent);font-weight:800}
+.welcome h2{font-size:clamp(23px,3vw,34px);letter-spacing:-1.2px;margin:5px 0 5px}
+.welcome p{margin:0;color:var(--muted);max-width:560px}
+.today{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px;padding:8px 14px;border-radius:14px;background:var(--accent2);color:var(--accent);font-size:12px;font-weight:800}
+.today small{font-size:9px;letter-spacing:1.4px;opacity:.75}
+.date-chip{background:var(--accent2);color:var(--accent);border-radius:14px;padding:12px 15px;min-width:116px;text-align:center}
+.date-chip strong{display:block;font-size:24px;line-height:1.1}
+.date-chip span{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}
+.card h3{font-size:13px;margin:0 0 4px;letter-spacing:-.2px}
+.sub{color:var(--muted);font-size:11px;margin:0 0 14px}
+.balance{grid-column:span 5}
+.quick{grid-column:span 7}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.big-number{font-size:34px;font-weight:750;letter-spacing:-1.4px;margin:8px 0 2px}
+.small-muted{color:var(--muted);font-size:11px}
+.perday{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:8px;padding:9px 12px;border-radius:12px;background:var(--accent2);color:var(--accent)}
+.perday strong{font-size:17px;letter-spacing:-.4px}
+.perday span{font-size:11px;font-weight:700}
+.metric-row{display:flex;gap:8px;margin-top:18px}
+.metric{flex:1;background:var(--surface2);padding:11px;border-radius:12px;min-width:0}
+.metric span{display:block;color:var(--muted);font-size:10px;margin-bottom:4px}
+.metric strong{font-size:15px;overflow-wrap:anywhere}
+.progress{height:7px;background:var(--surface2);border-radius:10px;overflow:hidden;margin-top:12px}
+.progress i{display:block;height:100%;width:0;background:var(--accent);border-radius:10px}
+.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 11px;background:var(--bg);color:var(--text);outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)}
+.bills{grid-column:span 7}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.section-title h3{margin:0}
+.inline-form{display:grid;grid-template-columns:1.2fr .8fr auto;gap:7px;margin-bottom:12px}
+.inline-form input{min-width:0}
+.bill-form{grid-template-columns:1fr 1fr auto}
+.bill-form #billName{grid-column:1/-1}
+.add{border:0;background:var(--accent);color:white;border-radius:10px;padding:0 13px;font-weight:800}
+.item-list{display:flex;flex-direction:column;gap:7px;max-height:220px;overflow:auto}
+.list-item{display:flex;align-items:center;gap:9px;padding:9px 10px;background:var(--surface2);border-radius:11px}
+.list-item .item-name{flex:1;min-width:0}
+.item-name strong{display:block;font-size:12px;overflow-wrap:anywhere}
+.item-name small{color:var(--muted);font-size:10px}
+.amount{font-weight:750;font-size:12px;white-space:nowrap}
+.delete{border:0;background:transparent;color:var(--muted);font-size:17px;padding:2px 5px}
+.check{accent-color:var(--accent);width:15px;height:15px;flex:none}
+.due{width:56px;padding:6px 6px;font-size:11px;text-align:center;flex:none}
+.empty{color:var(--muted);font-size:11px;text-align:center;padding:20px 8px}
+.savings{grid-column:span 5}
+.notes{grid-column:span 12}
+textarea{resize:vertical;min-height:108px;line-height:1.5}
+.goal-line{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:10px}
+
+/* Calendar */
+.spendcal{grid-column:span 7}
+.agenda{grid-column:span 5}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.cal-title{font-size:17px;font-weight:750;letter-spacing:-.5px;margin:0}
+.cal-nav{display:flex;gap:6px}
+.nav-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:16px;line-height:1;padding:0}
+.nav-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.weekdays,.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.weekdays span{text-align:center;font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.8px;padding:2px 0 6px}
+.day{min-height:66px;border:1.5px solid transparent;background:var(--surface2);color:var(--text);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-weight:700;font-size:13px;padding:4px 0}
+.day.other{background:transparent;opacity:.4}
+.day:disabled{cursor:default;opacity:.2}
+.day:hover:not(:disabled){border-color:var(--accent)}
+.day:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.day.today{border-color:var(--accent)}
+.day.selected{background:var(--accent);color:#fff;border-color:var(--accent);opacity:1}
+.dots{display:flex;gap:3px;height:6px;align-items:center}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.dot.bill{border-radius:2px;background:var(--bill)}
+.dot.paid{opacity:.4}
+.day.selected .dot,.day.selected .dot.bill{background:#fff}
+.legend{display:flex;gap:16px;margin-top:12px;font-size:10px;color:var(--muted);font-weight:700;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px}
+.spent{font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;background:var(--accent2);color:var(--accent);line-height:1.5;max-width:100%}
+.day.selected .spent{background:rgba(255,255,255,.25);color:#fff}
+.legend .amt{font-size:9px;font-weight:800;padding:1px 5px;border-radius:5px;background:var(--accent2);color:var(--accent)}
+.spend-stats{display:flex;gap:8px;margin-bottom:14px}
+.day-spend{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
+.day-spend .item-list{max-height:200px}
+.subhead{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:16px 0 8px}
+.agenda h3.agenda-date{font-size:15px;letter-spacing:-.3px}
+.tag{font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:6px;background:var(--accent2);color:var(--accent);white-space:nowrap;flex:none}
+.tag.bill{background:rgba(192,115,90,.15);color:var(--bill)}
+.list-item.done .item-name{text-decoration:line-through;opacity:.55}
+.agenda .item-list{max-height:260px;margin-bottom:14px}
+.agenda-form{display:grid;grid-template-columns:1fr 1fr;gap:7px;border-top:1px solid var(--line);padding-top:14px}
+.agenda-form input[type=text]{grid-column:1/-1}
+.agenda-form .add{grid-column:1/-1;padding:11px 13px;font-size:12px}
+
+.months{position:sticky;top:16px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:8px 6px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px}
+.months-label{font-size:9px;text-align:center;color:var(--muted);font-weight:800;letter-spacing:1.2px;padding:7px 0}
+.month{border:0;background:transparent;color:var(--muted);padding:9px 2px;border-radius:10px;font-size:10px;font-weight:750}
+.month.active{background:var(--accent2);color:var(--accent)}
+.month:hover{background:var(--surface2);color:var(--text)}
+.palette{display:flex;gap:7px;align-items:center}
+.swatch{width:19px;height:19px;border-radius:50%;border:2px solid var(--surface);outline:1px solid var(--line);padding:0}
+.swatch[aria-pressed="true"]{outline:2px solid var(--text)}
+.sage{background:#718b78}.lavender{background:#8b7ba9}.ocean{background:#548b9a}.terracotta{background:#b8755e}.rose{background:#b8798a}.butter{background:#a58a45}
+.palette-wrap{display:flex;align-items:center;gap:9px}
+.palette-wrap span{font-size:10px;color:var(--muted);font-weight:700}
+.month-heading{display:flex;align-items:end;justify-content:space-between;margin:2px 0 13px}
+.month-heading h2{font-size:19px;margin:0;letter-spacing:-.5px}
+.month-heading p{font-size:11px;color:var(--muted);margin:3px 0 0}
+.footer-note{color:var(--muted);font-size:10px;text-align:center;margin:18px 0 0}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:10px 15px;border-radius:12px;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media(max-width:800px){.app{padding:14px 12px 28px}.layout{grid-template-columns:minmax(0,1fr) 54px;gap:8px}.months{padding:6px 3px}.month{font-size:9px;padding:9px 0}.welcome{padding:19px}.balance,.quick,.bills,.savings,.notes,.spendcal,.agenda{grid-column:span 12}.topbar{align-items:flex-start}.actions{justify-content:flex-end}.palette-wrap{display:none}}
+@media(max-width:480px){.app{padding:10px 8px 24px}.brand p{font-size:9px}.brand h1{font-size:15px}.logo{width:36px;height:36px}.btn{padding:8px 9px;font-size:10px}.welcome{align-items:flex-start}.date-chip{min-width:76px;padding:9px}.date-chip strong{font-size:20px}.date-chip span{font-size:8px}.quick-grid{grid-template-columns:1fr 1fr}.inline-form{grid-template-columns:1fr  .7fr auto}.bill-form{grid-template-columns:1fr 1fr auto}.card{padding:14px}.day{min-height:54px;font-size:12px;border-radius:10px}.spent{font-size:9px;padding:1px 4px}.weekdays,.days{gap:3px}}
+@media print{
+ @page{size:A4;margin:12mm}
+ body{background:white!important;color:#222!important}
+ .app{max-width:none;padding:0}.topbar .actions,.months,.add,.delete,.footer-note,.nav-btn,.agenda-form,.spend-form,.due{display:none!important}
+ .layout{display:block}.welcome,.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid;background:white!important;color:#222!important}
+ .grid{gap:8px}.card{padding:12px}.balance,.quick,.bills,.savings,.notes,.spendcal,.agenda{grid-column:span 6}
+ input,textarea{background:white!important;color:#222!important;border:1px solid #ccc}
+ .list-item,.metric{background:#f5f5f5!important;color:#222!important}
+ .day{background:#f5f5f5!important;color:#222!important;min-height:38px}
+ .day.selected{background:#ddd!important;color:#000!important;border-color:#888!important}
+ .month-heading{margin-top:12px}
+}
+</style>
+</head>
+<body data-theme="day" data-palette="sage">
+<div class="app">
+ <header class="topbar">
+  <div class="brand"><div class="logo">₊</div><div><h1>The Mindful Money</h1><p>2027 Paycheck Budget Planner</p></div></div>
+  <div class="actions">
+   <div class="palette-wrap"><span>YOUR MOOD</span><div class="palette" aria-label="Choose planner color">
+    <button class="swatch sage" data-color="sage" aria-label="Sage" aria-pressed="true"></button>
+    <button class="swatch lavender" data-color="lavender" aria-label="Lavender" aria-pressed="false"></button>
+    <button class="swatch ocean" data-color="ocean" aria-label="Ocean" aria-pressed="false"></button>
+    <button class="swatch terracotta" data-color="terracotta" aria-label="Terracotta" aria-pressed="false"></button>
+    <button class="swatch rose" data-color="rose" aria-label="Rose" aria-pressed="false"></button>
+    <button class="swatch butter" data-color="butter" aria-label="Butter" aria-pressed="false"></button>
+   </div></div>
+   <button class="btn" id="modeBtn">☾ Night mode</button>
+   <button class="btn primary" id="pdfBtn">↓ Save / Print PDF</button>
+  </div>
+ </header>
+ <div class="layout">
+  <main class="main">
+   <section class="welcome">
+    <div><div class="eyebrow">A smart way to manage money</div><h2 id="greeting">Your money, made manageable.</h2><p>Small steps count. Start with what you know, and let the planner help you find your next step.</p>
+     <div class="today" aria-live="polite"><small>TODAY</small><span id="todayDate"></span></div></div>
+    <div class="date-chip"><strong>2027</strong><span>Your fresh start</span></div>
+   </section>
+   <div class="month-heading"><div><h2 id="monthTitle">January 2027</h2><p id="monthSubtitle">One month at a time. You’ve got this.</p></div><span class="eyebrow">MONTHLY OVERVIEW</span></div>
+   <section class="grid">
+    <article class="card balance">
+     <div class="card-head"><div><h3>Safe to spend</h3><p class="sub">A gentle snapshot of what’s available</p></div><span>✳</span></div>
+     <div class="small-muted">Estimated remaining balance</div><div class="big-number" id="safeSpend">$0.00</div>
+     <div class="perday" id="perDayBox" aria-live="polite"><strong id="perDay">$0.00</strong><span id="perDayText">a day</span></div>
+     <div class="progress"><i id="budgetProgress"></i></div>
+     <div class="metric-row"><div class="metric"><span>MONTHLY INCOME</span><strong id="incomeMetric">$0.00</strong></div><div class="metric"><span>SPENT + BILLS</span><strong id="outflowMetric">$0.00</strong></div></div>
+    </article>
+    <article class="card quick">
+     <div class="card-head"><div><h3>Your monthly plan</h3><p class="sub">Add the basics. You can adjust anytime.</p></div><span>✎</span></div>
+     <div class="quick-grid">
+      <div class="field"><label for="income">EXPECTED INCOME</label><input id="income" type="number" min="0" step=".01" placeholder="0.00"></div>
+      <div class="field"><label for="budget">SPENDING BUDGET</label><input id="budget" type="number" min="0" step=".01" placeholder="0.00"></div>
+      <div class="field"><label for="currency">CURRENCY</label><select id="currency">
+       <optgroup label="Popular currencies">
+        <option value="$">USD — US Dollar ($)</option><option value="€">EUR — Euro (€)</option><option value="£">GBP — British Pound (£)</option><option value="C$">CAD — Canadian Dollar (C$)</option><option value="A$">AUD — Australian Dollar (A$)</option><option value="₨">PKR — Pakistani Rupee (₨)</option><option value="₹">INR — Indian Rupee (₹)</option><option value="د.إ">AED — UAE Dirham (د.إ)</option><option value="ر.س">SAR — Saudi Riyal (ر.س)</option>
+       </optgroup>
+       <optgroup label="Asia & Pacific">
+        <option value="৳">BDT — Bangladeshi Taka (৳)</option><option value="¥">CNY — Chinese Yuan (¥)</option><option value="¥">JPY — Japanese Yen (¥)</option><option value="₩">KRW — South Korean Won (₩)</option><option value="S$">SGD — Singapore Dollar (S$)</option><option value="HK$">HKD — Hong Kong Dollar (HK$)</option><option value="฿">THB — Thai Baht (฿)</option><option value="₫">VND — Vietnamese Dong (₫)</option><option value="Rp">IDR — Indonesian Rupiah (Rp)</option><option value="₱">PHP — Philippine Peso (₱)</option><option value="RM">MYR — Malaysian Ringgit (RM)</option><option value="NZ$">NZD — New Zealand Dollar (NZ$)</option><option value="₨">LKR — Sri Lankan Rupee (₨)</option><option value="रू">NPR — Nepalese Rupee (रू)</option>
+       </optgroup>
+       <optgroup label="Europe">
+        <option value="CHF">CHF — Swiss Franc</option><option value="kr">SEK — Swedish Krona (kr)</option><option value="kr">NOK — Norwegian Krone (kr)</option><option value="kr">DKK — Danish Krone (kr)</option><option value="zł">PLN — Polish Złoty (zł)</option><option value="Kč">CZK — Czech Koruna (Kč)</option><option value="Ft">HUF — Hungarian Forint (Ft)</option><option value="lei">RON — Romanian Leu (lei)</option><option value="₺">TRY — Turkish Lira (₺)</option><option value="₴">UAH — Ukrainian Hryvnia (₴)</option>
+       </optgroup>
+       <optgroup label="Americas">
+        <option value="MX$">MXN — Mexican Peso (MX$)</option><option value="R$">BRL — Brazilian Real (R$)</option><option value="$">ARS — Argentine Peso ($)</option><option value="CLP$">CLP — Chilean Peso (CLP$)</option><option value="COL$">COP — Colombian Peso (COL$)</option>
+       </optgroup>
+       <optgroup label="Africa & Middle East">
+        <option value="R">ZAR — South African Rand (R)</option><option value="₦">NGN — Nigerian Naira (₦)</option><option value="KSh">KES — Kenyan Shilling (KSh)</option><option value="E£">EGP — Egyptian Pound (E£)</option><option value="₪">ILS — Israeli New Shekel (₪)</option><option value="ر.ق">QAR — Qatari Riyal (ر.ق)</option><option value="د.ك">KWD — Kuwaiti Dinar (د.ك)</option><option value="د.ب">BHD — Bahraini Dinar (د.ب)</option><option value="﷼">OMR — Omani Rial (﷼)</option>
+       </optgroup>
+      </select></div>
+      <div class="field"><label for="focus">THIS MONTH’S MONEY FOCUS</label><input id="focus" placeholder="e.g. Spend with intention"></div>
+     </div>
+    </article>
+
+    <article class="card spendcal" id="calendarCard">
+     <div class="cal-head">
+      <div><h3 class="cal-title" id="calTitle">January 2027</h3><p class="sub" style="margin:2px 0 0">Everyday spending · tap a date to see its day</p></div>
+      <div class="cal-nav">
+       <button class="nav-btn" id="prevMonth" type="button" aria-label="Previous month">‹</button>
+       <button class="nav-btn" id="nextMonth" type="button" aria-label="Next month">›</button>
+      </div>
+     </div>
+     <div class="spend-stats">
+      <div class="metric"><span>SPENT THIS MONTH</span><strong id="monthSpent">$0.00</strong></div>
+      <div class="metric"><span id="daySpentLabel">SPENT ON THIS DAY</span><strong id="daySpent">$0.00</strong></div>
+     </div>
+     <div class="weekdays" aria-hidden="true"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div>
+     <div class="days" id="calDays"></div>
+     <div class="legend"><span><b class="amt">123</b>Spent that day</span><span><i class="dot"></i>Event / reminder</span><span><i class="dot bill"></i>Bill due</span></div>
+     <div class="day-spend">
+      <div class="section-title"><div><h3 id="spendTitle">Spending on this day</h3><p class="sub" style="margin:0">Log it as it happens. No judgement.</p></div></div>
+      <form class="inline-form spend-form" id="expenseForm"><input id="expenseName" required placeholder="What did you spend on?"><input id="expenseAmount" type="number" min=".01" step=".01" required placeholder="Amount"><button class="add" type="submit">+</button></form>
+      <div class="item-list" id="expenseList"></div>
+      <div id="undatedWrap" hidden><div class="subhead">Not on a date yet · add a day</div><div class="item-list" id="undatedList"></div></div>
+     </div>
+    </article>
+    <article class="card agenda" id="agendaCard">
+     <div class="card-head"><div><h3 class="agenda-date" id="agendaTitle">Daily agenda</h3><p class="sub" id="agendaSub" style="margin:2px 0 0"></p></div><span>☰</span></div>
+     <div class="item-list" id="agendaList"></div>
+     <form class="agenda-form" id="agendaForm">
+      <select id="agendaType" aria-label="Type"><option value="event">Event</option><option value="reminder">Reminder</option></select>
+      <input id="agendaTime" type="time" aria-label="Time (optional)">
+      <input id="agendaText" type="text" required placeholder="Add something for this day…">
+      <button class="add" type="submit">+ Add to this day</button>
+     </form>
+    </article>
+
+    <article class="card bills">
+     <div class="section-title"><div><h3>Bills & essentials</h3><p class="sub">Add a due day to see it on your calendar.</p></div></div>
+     <form class="inline-form bill-form" id="billForm"><input id="billName" required placeholder="Bill or payment"><input id="billAmount" type="number" min=".01" step=".01" required placeholder="Amount"><input id="billDue" type="number" min="1" max="31" step="1" placeholder="Due day (1–31)" aria-label="Due day of the month"><button class="add" type="submit">+</button></form>
+     <div class="item-list" id="billList"><div class="empty">Nothing added yet. Add a bill to keep it on your radar.</div></div>
+    </article>
+    <article class="card savings">
+     <div class="section-title"><div><h3>Savings goal</h3><p class="sub">Progress over perfection.</p></div><span>↗</span></div>
+     <div class="field"><label for="goalName">WHAT ARE YOU SAVING FOR?</label><input id="goalName" placeholder="e.g. Emergency fund"></div>
+     <div class="quick-grid" style="margin-top:9px">
+      <div class="field"><label for="goalTarget">GOAL AMOUNT</label><input id="goalTarget" type="number" min="0" step=".01" placeholder="0.00"></div>
+      <div class="field"><label for="goalSaved">AMOUNT SAVED</label><input id="goalSaved" type="number" min="0" step=".01" placeholder="0.00"></div>
+     </div>
+     <div class="progress"><i id="savingsProgress"></i></div>
+     <div class="goal-line"><span id="goalLabel">Your goal progress</span><strong id="goalPercent">0%</strong></div>
+    </article>
+    <article class="card notes">
+     <div class="section-title"><div><h3>Brain-dump & reminders</h3><p class="sub">Get money thoughts out of your head and onto the page.</p></div><span>♡</span></div>
+     <textarea id="notes" placeholder="Remember to cancel that subscription…&#10;Ask about the electricity bill…&#10;Celebrate a small win…"></textarea>
+    </article>
+   </section>
+   <p class="footer-note">Your entries are saved in this browser on this device. Use “Save / Print PDF” regularly for a portable backup. The Mindful Money. All Rights Reserved.</p>
+  </main>
+  <nav class="months" aria-label="2027 months"><div class="months-label">2027</div>
+   <button class="month active" data-month="0">JAN</button><button class="month" data-month="1">FEB</button>
+   <button class="month" data-month="2">MAR</button><button class="month" data-month="3">APR</button>
+   <button class="month" data-month="4">MAY</button><button class="month" data-month="5">JUN</button>
+   <button class="month" data-month="6">JUL</button><button class="month" data-month="7">AUG</button>
+   <button class="month" data-month="8">SEP</button><button class="month" data-month="9">OCT</button>
+   <button class="month" data-month="10">NOV</button><button class="month" data-month="11">DEC</button>
+  </nav>
+ </div>
+</div>
+<div class="toast" id="toast">Saved in this browser</div>
+<script>
+(()=>{
+ const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+ const $=id=>document.getElementById(id);
+ const blank=()=>({income:'',budget:'',currency:'$',focus:'',expenses:[],bills:[],goalName:'',goalTarget:'',goalSaved:'',notes:''});
+ let store={months:Array.from({length:12},blank),agenda:{},theme:'day',palette:'sage'};
+ let current=0,sel=1;
+ const now=new Date();
+ if(now.getFullYear()===2027){current=now.getMonth();sel=now.getDate()}
+ try{const saved=JSON.parse(localStorage.getItem('mindfulMoney2027'));if(saved&&Array.isArray(saved.months)&&saved.months.length===12)store={...store,...saved}}catch(e){}
+ if(!store.agenda||typeof store.agenda!=='object'||Array.isArray(store.agenda))store.agenda={};
+ store.months.forEach(m=>{if(!Array.isArray(m.expenses))m.expenses=[];if(!Array.isArray(m.bills))m.bills=[]});
+ function persist(){try{localStorage.setItem('mindfulMoney2027',JSON.stringify(store));toast('Saved in this browser')}catch(e){toast('Could not save. Please export a PDF backup.')}}
+ function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(()=>el.classList.remove('show'),1700)}
+ function data(){return store.months[current]}
+ function money(n){const c=data().currency||'$';return c+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+ const ordinal=n=>{const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+
+ /* ---------- calendar helpers ---------- */
+ const dim=m=>new Date(2027,m+1,0).getDate();
+ const keyOf=(m,d)=>'2027-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+ const dueDay=(b,m)=>{const n=parseInt(b.due,10);return n>=1?Math.min(n,dim(m)):0};
+ const billsOn=(m,d)=>store.months[m].bills.filter(b=>dueDay(b,m)===d);
+ const eventsOn=(m,d)=>store.agenda[keyOf(m,d)]||[];
+ const spentOn=(m,d)=>store.months[m].expenses.reduce((t,x)=>t+(parseInt(x.day,10)===d?Number(x.amount||0):0),0);
+ const compact=n=>{n=Math.round(n*100)/100;if(n>=1e6)return (n/1e6).toFixed(1).replace(/\.0$/,'')+'M';if(n>=1e4)return Math.round(n/1e3)+'k';if(n>=1e3)return (n/1e3).toFixed(1).replace(/\.0$/,'')+'k';if(n<10&&n%1)return n.toFixed(1).replace(/\.0$/,'');return String(Math.round(n))};
+
+ function render(){
+  const d=data();$('monthTitle').textContent=months[current]+' 2027';$('monthSubtitle').textContent=d.focus||'One month at a time. You’ve got this.';
+  ['income','budget','currency','focus','goalName','goalTarget','goalSaved','notes'].forEach(k=>$(k).value=d[k]??'');
+  $('expenseList').innerHTML='';$('billList').innerHTML='';
+  renderList('bills','billList','bill');renderExpenses();
+  updateTotals();$('goalLabel').textContent=d.goalName||'Your goal progress';
+  const pct=Number(d.goalTarget)>0?Math.min(100,Number(d.goalSaved||0)/Number(d.goalTarget)*100):0;
+  $('goalPercent').textContent=Math.round(pct)+'%';$('savingsProgress').style.width=pct+'%';
+  document.querySelectorAll('.month').forEach(b=>b.classList.toggle('active',Number(b.dataset.month)===current));
+  renderCalendar();renderAgenda();
+ }
+ function renderExpenses(){
+  const m=current,d=sel,arr=data().expenses;
+  $('spendTitle').textContent='Spending on '+new Date(2027,m,d).toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  $('monthSpent').textContent=money(arr.reduce((t,x)=>t+Number(x.amount||0),0));
+  $('daySpent').textContent=money(spentOn(m,d));
+  $('daySpentLabel').textContent='SPENT ON '+d+' '+months[m].slice(0,3).toUpperCase();
+  const list=$('expenseList');list.innerHTML='';
+  const dayItems=arr.filter(x=>parseInt(x.day,10)===d);
+  if(!dayItems.length)list.innerHTML='<div class="empty">Nothing logged for this day yet.</div>';
+  dayItems.forEach(item=>{
+   const row=document.createElement('div');row.className='list-item';
+   const name=document.createElement('div');name.className='item-name';const st=document.createElement('strong');st.textContent=item.name;name.append(st);
+   const amount=document.createElement('span');amount.className='amount';amount.textContent=money(item.amount);
+   const del=document.createElement('button');del.className='delete';del.textContent='×';del.setAttribute('aria-label','Delete '+item.name);
+   del.addEventListener('click',()=>{arr.splice(arr.indexOf(item),1);persist();render()});
+   row.append(name,amount,del);list.append(row);
+  });
+  const undated=arr.filter(x=>{const n=parseInt(x.day,10);return !(n>=1&&n<=dim(m))});
+  $('undatedWrap').hidden=!undated.length;
+  const ul=$('undatedList');ul.innerHTML='';
+  undated.forEach(item=>{
+   const row=document.createElement('div');row.className='list-item';
+   const name=document.createElement('div');name.className='item-name';const st=document.createElement('strong');st.textContent=item.name;name.append(st);
+   const due=document.createElement('input');due.type='number';due.min='1';due.max=String(dim(m));due.step='1';due.className='due';due.placeholder='Day';due.title='Day of the month';due.setAttribute('aria-label','Day for '+item.name);
+   due.addEventListener('change',()=>{const n=parseInt(due.value,10);if(n>=1&&n<=dim(m)){item.day=n;persist();render()}});
+   const amount=document.createElement('span');amount.className='amount';amount.textContent=money(item.amount);
+   const del=document.createElement('button');del.className='delete';del.textContent='×';del.setAttribute('aria-label','Delete '+item.name);
+   del.addEventListener('click',()=>{arr.splice(arr.indexOf(item),1);persist();render()});
+   row.append(name,due,amount,del);ul.append(row);
+  });
+ }
+ function renderList(key,id,type){
+  const arr=data()[key],el=$(id);
+  if(!arr.length){el.innerHTML='<div class="empty">'+(type==='expense'?'No expenses yet. Add your first one above.':'Nothing added yet. Add a bill to keep it on your radar.')+'</div>';return}
+  arr.forEach((item,i)=>{
+   const row=document.createElement('div');row.className='list-item';
+   if(type==='bill'){const cb=document.createElement('input');cb.type='checkbox';cb.className='check';cb.checked=!!item.paid;cb.setAttribute('aria-label','Mark bill paid');cb.addEventListener('change',()=>{item.paid=cb.checked;persist();render()});row.append(cb)}
+   const name=document.createElement('div');name.className='item-name';const strong=document.createElement('strong');strong.textContent=item.name;name.append(strong);
+   if(type==='bill'){const small=document.createElement('small');const dd=dueDay(item,current);small.textContent=(dd?'Due '+ordinal(dd)+' · ':'No due day · ')+(item.paid?'Paid':'To pay');name.append(small)}
+   const amount=document.createElement('span');amount.className='amount';amount.textContent=money(item.amount);
+   if(type==='bill'){
+    const due=document.createElement('input');due.type='number';due.min='1';due.max='31';due.step='1';due.className='due';due.placeholder='Day';due.title='Due day of the month';due.setAttribute('aria-label','Due day for '+item.name);due.value=item.due||'';
+    due.addEventListener('change',()=>{const n=parseInt(due.value,10);item.due=(n>=1&&n<=31)?n:'';persist();render()});
+    row.append(name,due,amount);
+   }else row.append(name,amount);
+   const del=document.createElement('button');del.className='delete';del.textContent='×';del.setAttribute('aria-label','Delete '+item.name);del.addEventListener('click',()=>{data()[key].splice(i,1);persist();render()});
+   row.append(del);el.append(row);
+  });
+ }
+ function updateTotals(){
+  const d=data(),income=Number(d.income)||0,spent=d.expenses.reduce((s,x)=>s+Number(x.amount||0),0),bills=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+Number(x.amount||0),0),out=spent+bills;
+  $('safeSpend').textContent=money(income-out);
+  const rem=income-out,m=current,n=dim(m);let daysLeft=n;
+  if(now.getFullYear()===2027){if(m<now.getMonth())daysLeft=0;else if(m===now.getMonth())daysLeft=n-now.getDate()+1}
+  const pd=$('perDay'),pt=$('perDayText');
+  if(daysLeft<=0){pd.textContent='—';pt.textContent='this month has ended'}
+  else if(rem<0){pd.textContent=money(0);pt.textContent='a day · you’re '+money(-rem)+' over for the month'}
+  else{pd.textContent=money(rem/daysLeft);pt.textContent='a day for the next '+daysLeft+' day'+(daysLeft===1?'':'s')}$('incomeMetric').textContent=money(income);$('outflowMetric').textContent=money(out);
+  $('budgetProgress').style.width=(Number(d.budget)>0?Math.min(100,out/Number(d.budget)*100):0)+'%';
+ }
+
+ /* ---------- calendar ---------- */
+ function renderCalendar(){
+  $('calTitle').textContent=months[current]+' 2027';
+  $('prevMonth').disabled=current===0;$('nextMonth').disabled=current===11;
+  const grid=$('calDays');grid.innerHTML='';
+  const lead=new Date(2027,current,1).getDay(),n=dim(current),prevDim=new Date(2027,current,0).getDate();
+  const total=Math.ceil((lead+n)/7)*7;
+  for(let i=0;i<total;i++){
+   let m=current,d=i-lead+1,other=false;
+   if(d<1){m=current-1;d=prevDim+d;other=true}else if(d>n){m=current+1;d=d-n;other=true}
+   const b=document.createElement('button');b.type='button';b.className='day'+(other?' other':'');
+   const num=document.createElement('span');num.textContent=d;b.append(num);
+   if(m<0||m>11){b.disabled=true;grid.append(b);continue}
+   const ev=eventsOn(m,d),bl=billsOn(m,d),sp=spentOn(m,d);
+   if(sp>0){const p=document.createElement('span');p.className='spent';p.textContent=compact(sp);b.append(p)}
+   const dots=document.createElement('span');dots.className='dots';
+   ev.slice(0,3).forEach(()=>{const x=document.createElement('i');x.className='dot';dots.append(x)});
+   if(bl.length){const x=document.createElement('i');x.className='dot bill'+(bl.every(z=>z.paid)?' paid':'');dots.append(x)}
+   b.append(dots);
+   if(!other&&d===sel)b.classList.add('selected');
+   if(now.getFullYear()===2027&&now.getMonth()===m&&now.getDate()===d)b.classList.add('today');
+   b.setAttribute('aria-pressed',String(!other&&d===sel));
+   let label=d+' '+months[m]+' 2027';
+   if(ev.length||bl.length)label+=', '+ev.length+' planned, '+bl.length+' bill'+(bl.length===1?'':'s')+' due';
+   if(sp>0)label+=', spent '+sp.toFixed(2);
+   b.setAttribute('aria-label',label);
+   b.addEventListener('click',()=>{
+    if(m!==current){current=m;sel=d;render()}
+    else{sel=d;renderCalendar();renderAgenda();renderExpenses()}
+   });
+   grid.append(b);
+  }
+ }
+ function renderAgenda(){
+  const m=current,d=sel,date=new Date(2027,m,d);
+  $('agendaTitle').textContent=date.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const ev=eventsOn(m,d).slice().sort((a,b)=>(a.time||'').localeCompare(b.time||'')),bl=billsOn(m,d),ex=data().expenses.filter(x=>parseInt(x.day,10)===d);
+  $('agendaSub').textContent=(ev.length+bl.length+ex.length)?(bl.length+' bill'+(bl.length===1?'':'s')+' due · '+ev.length+' event'+(ev.length===1?'':'s')+'/reminder'+(ev.length===1?'':'s')+(ex.length?' · '+money(spentOn(m,d))+' spent':'')):'A clear day. Add something below if you like.';
+  const list=$('agendaList');list.innerHTML='';
+  if(!ev.length&&!bl.length&&!ex.length){list.innerHTML='<div class="empty">Nothing planned for this day yet.</div>'}
+  bl.forEach(b=>{
+   const row=document.createElement('div');row.className='list-item'+(b.paid?' done':'');
+   const cb=document.createElement('input');cb.type='checkbox';cb.className='check';cb.checked=!!b.paid;cb.setAttribute('aria-label','Mark '+b.name+' paid');
+   cb.addEventListener('change',()=>{b.paid=cb.checked;persist();render()});
+   const name=document.createElement('div');name.className='item-name';
+   const s=document.createElement('strong');s.textContent=b.name;const sm=document.createElement('small');sm.textContent=b.paid?'Paid':'To pay';name.append(s,sm);
+   const tag=document.createElement('span');tag.className='tag bill';tag.textContent='Bill due';
+   const amt=document.createElement('span');amt.className='amount';amt.textContent=money(b.amount);
+   row.append(cb,name,tag,amt);list.append(row);
+  });
+  ex.forEach(x=>{
+   const row=document.createElement('div');row.className='list-item';
+   const name=document.createElement('div');name.className='item-name';
+   const s=document.createElement('strong');s.textContent=x.name;const sm=document.createElement('small');sm.textContent='Everyday spending';name.append(s,sm);
+   const tag=document.createElement('span');tag.className='tag';tag.textContent='Spent';
+   const amt=document.createElement('span');amt.className='amount';amt.textContent=money(x.amount);
+   row.append(name,tag,amt);list.append(row);
+  });
+  ev.forEach(e=>{
+   const row=document.createElement('div');row.className='list-item'+(e.done?' done':'');
+   const cb=document.createElement('input');cb.type='checkbox';cb.className='check';cb.checked=!!e.done;cb.setAttribute('aria-label','Mark '+e.title+' done');
+   cb.addEventListener('change',()=>{e.done=cb.checked;persist();renderAgenda()});
+   const name=document.createElement('div');name.className='item-name';
+   const s=document.createElement('strong');s.textContent=e.title;const sm=document.createElement('small');sm.textContent=e.time||'All day';name.append(s,sm);
+   const tag=document.createElement('span');tag.className='tag';tag.textContent=e.type==='reminder'?'Reminder':'Event';
+   const del=document.createElement('button');del.className='delete';del.textContent='×';del.setAttribute('aria-label','Delete '+e.title);
+   del.addEventListener('click',()=>{const k=keyOf(m,d);store.agenda[k]=(store.agenda[k]||[]).filter(x=>x!==e&&x.id!==e.id);if(!store.agenda[k].length)delete store.agenda[k];persist();renderCalendar();renderAgenda()});
+   row.append(cb,name,tag,del);list.append(row);
+  });
+ }
+
+ function bindField(id){$(id).addEventListener('input',()=>{data()[id]=$(id).value;persist();if(['income','budget','currency'].includes(id)){updateTotals();renderAgenda();renderList_refresh()}if(id==='goalName')$('goalLabel').textContent=$(id).value||'Your goal progress';if(['goalTarget','goalSaved'].includes(id)){const pct=Number(data().goalTarget)>0?Math.min(100,Number(data().goalSaved||0)/Number(data().goalTarget)*100):0;$('goalPercent').textContent=Math.round(pct)+'%';$('savingsProgress').style.width=pct+'%'}if(id==='focus')$('monthSubtitle').textContent=$(id).value||'One month at a time. You’ve got this.'})}
+ function renderList_refresh(){if(document.activeElement&&document.activeElement.id==='currency'){$('expenseList').innerHTML='';$('billList').innerHTML='';renderList('bills','billList','bill');renderExpenses()}}
+ ['income','budget','currency','focus','goalName','goalTarget','goalSaved','notes'].forEach(bindField);
+ $('expenseForm').addEventListener('submit',e=>{e.preventDefault();data().expenses.push({name:$('expenseName').value.trim(),amount:Number($('expenseAmount').value),day:sel});$('expenseName').value='';$('expenseAmount').value='';persist();render()});
+ $('billForm').addEventListener('submit',e=>{e.preventDefault();const n=parseInt($('billDue').value,10);data().bills.push({name:$('billName').value.trim(),amount:Number($('billAmount').value),paid:false,due:(n>=1&&n<=31)?n:''});$('billName').value='';$('billAmount').value='';$('billDue').value='';persist();render()});
+ $('agendaForm').addEventListener('submit',e=>{
+  e.preventDefault();const title=$('agendaText').value.trim();if(!title)return;
+  const k=keyOf(current,sel);
+  (store.agenda[k]=store.agenda[k]||[]).push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),type:$('agendaType').value,title,time:$('agendaTime').value,done:false});
+  $('agendaText').value='';$('agendaTime').value='';persist();renderCalendar();renderAgenda();
+ });
+ $('prevMonth').addEventListener('click',()=>{if(current>0){current--;sel=Math.min(sel,dim(current));render()}});
+ $('nextMonth').addEventListener('click',()=>{if(current<11){current++;sel=Math.min(sel,dim(current));render()}});
+ document.querySelectorAll('.month').forEach(b=>b.addEventListener('click',()=>{current=Number(b.dataset.month);sel=Math.min(sel,dim(current));render()}));
+ document.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{store.palette=b.dataset.color;document.body.dataset.palette=store.palette;document.querySelectorAll('.swatch').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));persist()}));
+ function applyTheme(){document.body.dataset.theme=store.theme;$('modeBtn').textContent=store.theme==='day'?'☾ Night mode':'☀ Day mode'}
+ $('modeBtn').addEventListener('click',()=>{store.theme=store.theme==='day'?'night':'day';applyTheme();persist()});
+ $('pdfBtn').addEventListener('click',()=>{window.print()});
+ function showToday(){$('todayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+ showToday();setInterval(showToday,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)showToday()});
+ document.body.dataset.palette=store.palette;document.querySelectorAll('.swatch').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.color===store.palette)));applyTheme();render();
+})();
+</script>
+</body>
+</html>
